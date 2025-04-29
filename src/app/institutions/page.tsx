@@ -23,7 +23,7 @@ function DashboardContent() {
 
     switch (activeTab) {
         case "dashboard":
-            return <CreateCertificatePage />;
+            return <Dashboard />;
         case "create_certificate":
             return <CreateCertificatePage />;
         case "identity_admin":
@@ -37,6 +37,8 @@ function DashboardContent() {
         default:
             return <Dashboard />;
     }
+    console.log(activeTab);
+
 }
 
 export default function Page() {

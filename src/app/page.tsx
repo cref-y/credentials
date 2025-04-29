@@ -31,7 +31,7 @@ export default function Home() {
                         {/* Desktop navigation */}
                         <nav className="hidden md:flex space-x-8">
                             <Link href="#features" className="text-gray-700 hover:text-blue-600 font-medium transition">Features</Link>
-                            <Link href="#students" className="text-gray-700 hover:text-blue-600 font-medium transition">For Students</Link>
+                            <Link href="#users" className="text-gray-700 hover:text-blue-600 font-medium transition">For Users</Link>
                             <Link href="#institutions" className="text-gray-700 hover:text-blue-600 font-medium transition">For Institutions</Link>
                             <Link href="#about" className="text-gray-700 hover:text-blue-600 font-medium transition">About</Link>
                             <Link href="/subdomain" className="text-gray-700 hover:text-blue-600 font-medium transition">Subdomain</Link>
@@ -61,7 +61,7 @@ export default function Home() {
                 {mobileMenuOpen && (
                     <div className="md:hidden bg-white border-t border-gray-200 px-2 pt-2 pb-3 space-y-1">
                         <Link href="#features" className="block px-3 py-2 text-gray-700 hover:text-blue-600 font-medium">Features</Link>
-                        <Link href="#students" className="block px-3 py-2 text-gray-700 hover:text-blue-600 font-medium">For Students</Link>
+                        <Link href="#students" className="block px-3 py-2 text-gray-700 hover:text-blue-600 font-medium">For Users</Link>
                         <Link href="#institutions" className="block px-3 py-2 text-gray-700 hover:text-blue-600 font-medium">For Institutions</Link>
                         <Link href="#about" className="block px-3 py-2 text-gray-700 hover:text-blue-600 font-medium">About</Link>
                         <div className="pt-4 flex flex-col space-y-3">
@@ -114,7 +114,7 @@ export default function Home() {
                                             <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                                             <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
                                         </svg>
-                                        Student Registration
+                                        Users Registration
                                     </span>
                                 </Link>
                                 <Link href="/institutions" className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-6 py-3 rounded-lg font-medium text-center shadow-lg shadow-orange-500/20 transition-all duration-200">
@@ -970,7 +970,7 @@ export default function Home() {
                         </div>
                         <div className="flex flex-wrap justify-center gap-8 md:gap-12 lg:gap-16 mt-8">
                             {[
-                                 { name: "University of Nairobi", alt: "University of Nairobi logo", url: "https://educhain.io/wp-content/uploads/2021/05/logo_new-1.png" },
+                                { name: "University of Nairobi", alt: "University of Nairobi logo", url: "https://educhain.io/wp-content/uploads/2021/05/logo_new-1.png" },
                                 { name: "Safaricom", alt: "Safaricom logo", url: "https://www.shofco.org/wp-content/uploads/2020/06/safaricom-foundation.png" },
                                 { name: "Zetech University", alt: "Kenya Commercial Bank logo", url: "https://journals.zetech.ac.ke/public/journals/2/pageHeaderLogoImage_en_US.png" },
                                 { name: "Strathmore University", alt: "Strathmore University logo", url: "https://giftshop.strathmore.edu/assets/img/logo/SU-Logo.png" },
@@ -979,7 +979,7 @@ export default function Home() {
                                 <div key={index} className="group h-12 flex items-center transition-all duration-300 hover:scale-110">
                                     <div className="rounded-lg p-2 flex items-center">
                                         <img src={org.url}
-                                        alt={org.alt} className="h-12 w-auto object-contain opacity-70 group-hover:opacity-100 transition-opacity" />
+                                            alt={org.alt} className="h-12 w-auto object-contain opacity-70 group-hover:opacity-100 transition-opacity" />
                                     </div>
                                 </div>
                             ))}

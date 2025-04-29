@@ -1,8 +1,10 @@
 "server only"
 
+import { ContactlessOutlined } from "@mui/icons-material"
 import { PinataSDK } from "pinata-web3"
 
 export const pinata = new PinataSDK({
-    pinataJwt: `${process.env.PINATA_JWT}`,
-    pinataGateway: `${process.env.NEXT_PUBLIC_GATEWAY_URL}`
+    pinataJwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiJjNzU3MTBmNC04YzllLTRiNzYtOTExMC0xM2Q0NjhiYzQ3MDkiLCJlbWFpbCI6Im11bGlueWFmYWRoaWxAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiRlJBMSJ9LHsiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjEsImlkIjoiTllDMSJ9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6IjVkYWJhZjIyNGI0MGU1Zjg2ZTdmIiwic2NvcGVkS2V5U2VjcmV0IjoiMTI1YmJmNjJkN2I1MzhiOTU1NTc1NzgwZTk0YjZiY2Q0YjlkNDcwMzdlMTRlMmM0MDViNzdmZWYzNjQ5NjUwNCIsImV4cCI6MTc3NjgwMzE0OX0.BEiH9NtBpUCFIngXx1Gkiw6OjnbiN5Fyf2OWRmS0yg4',
+    pinataGateway: 'coral-immense-wasp-225.mypinata.cloud'
 })
+

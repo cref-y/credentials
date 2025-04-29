@@ -1,8 +1,14 @@
-import { useState } from 'react';
-import { FaCertificate, FaCloudUploadAlt, FaFileImage, FaArrowRight, FaPlus, FaEdit, FaTrash, FaClock, FaCheckCircle } from 'react-icons/fa';
+// app/create-certificates/page.tsx
+import { useState, useRef } from 'react';
+import { CertificateFormState, DistributionMethod, InputMethod } from '@/types/types';
+import CertificateImageUpload from '../components/CertificateImageUpload';
+import CertificateDetails from '../components/CertificateDetails';
+import CertificateDeployment from '../components/CertificateDeployment';
+import DistributionMethodSelector from '../components/DistributionMethodSelector';
 
 const CreateCertificatePage = () => {
-    const [formData, setFormData] = useState({
+    // Form data state management
+    const [state, setState] = useState<CertificateFormState>({
         studentName: '',
         achievement: '',
         imageCID: '',
@@ -10,303 +16,335 @@ const CreateCertificatePage = () => {
         studentWallet: '',
         signers: [
             { address: '0x45.....8F21', role: 'Dean of School', status: 'completed' },
-            { address: '0x72.....1A45', role: 'Department Chair', status: 'pending' }
         ],
-        selectedNetwork: 'hedera'
+        selectedNetwork: 'hedera',
+        selectedImage: null,
+        isTemplate: false,
+        templateName: '',
+        requireApproval: true,
+        maxMints: 100,
+        expiryDate: ''
     });
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+    const [distributionMethod, setDistributionMethod] = useState<DistributionMethod>('direct');
+    const [inputMethod, setInputMethod] = useState<InputMethod>('manual');
+    const [uploadingImage, setUploadingImage] = useState(false);
+    const [uploadedImage, setUploadedImage] = useState(false);
+    const [creatingMetadata, setCreatingMetadata] = useState(false);
+    const [createdMetadata, setCreatedMetadata] = useState(false);
+    const [deploying, setDeploying] = useState(false);
+    const [deployed, setDeployed] = useState(false);
+    const [successMessage, setSuccessMessage] = useState(false);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [qrCodeGenerated, setQrCodeGenerated] = useState(false);
+    const [qrCodeUrl, setQrCodeUrl] = useState('');
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);[]
+
+    const imageInputRef = useRef<HTMLInputElement>(null);
+    const [error, setError] = useState<string | null>(null);
+    const successMessageRef = useRef<HTMLDivElement>(null);
+
+    // Check if metadata can be created
+    const isMetadataEligible = state.imageCID &&
+        ((distributionMethod === 'direct' && state.studentName && state.achievement) ||
+            (distributionMethod === 'qrcode' && state.templateName));
+
+    // Count pending signers
+    const pendingSigners = state.signers.filter(s => s.status === 'pending').length;
+
+    // Event handlers
+    const handleSelectImage = () => {
+        imageInputRef.current?.click();
     };
 
-    const handleAddSigner = () => {
-        if (formData.signers.length < 3) {
-            setFormData(prev => ({
-                ...prev,
-                signers: [...prev.signers, { address: '', role: '', status: 'pending' }]
-            }));
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setState(prev => ({ ...prev, selectedImage: file }));
+
+            // Create image preview
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                setImagePreview(e.target?.result as string);
+            }
+            reader.readAsDataURL(file);
         }
     };
 
-    const handleRemoveSigner = (index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            signers: prev.signers.filter((_, i) => i !== index)
-        }));
+    const handleUploadToIPFS = async () => {
+        if (!state.selectedImage) {
+            setError('Please select an image first');
+            return;
+        }
+
+        setUploadingImage(true);
+        setError(null);
+
+        try {
+            const data = new FormData();
+            data.append('file', state.selectedImage); // Add the file to FormData
+
+            const uploadRequest = await fetch("/api/files", {
+                method: "POST",
+                body: data // Now this contains the actual file
+            });
+
+            if (!uploadRequest.ok) {
+                const errorResponse = await uploadRequest.json();
+                throw new Error(errorResponse.error || "Failed to upload image");
+            }
+
+            const ipfsUrl = await uploadRequest.json();
+            const ipfsHash = ipfsUrl.split("/ipfs/")[1];
+            if (!ipfsHash) throw new Error("Invalid IPFS URL format");
+
+            const ipfsFormat = `ipfs://${ipfsHash}`;
+            setState(prev => ({ ...prev, imageCID: ipfsFormat }));
+            setUploadedImage(true);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to upload image');
+            setUploadedImage(false);
+        } finally {
+            setUploadingImage(false);
+        }
     };
 
-    const handleSignerChange = (index: number, field: string, value: string) => {
-        const updatedSigners = [...formData.signers];
-        updatedSigners[index] = { ...updatedSigners[index], [field]: value };
-        setFormData(prev => ({
-            ...prev,
-            signers: updatedSigners
-        }));
+    const handleCreateMetadata = async () => {
+        if (!state.imageCID) {
+            setError('Please upload an image first');
+            return;
+        }
+
+        setCreatingMetadata(true);
+        setError(null);
+
+        try {
+            // Prepare metadata based on distribution method
+            const metadata = {
+                name: distributionMethod === 'direct' ? state.studentName : state.templateName,
+                description: distributionMethod === 'direct'
+                    ? `Certificate of ${state.achievement} awarded to ${state.studentName}`
+                    : `Certificate template: ${state.templateName}`,
+                image: state.imageCID,
+                attributes: [
+                    {
+                        trait_type: "Achievement",
+                        value: state.achievement,
+                    },
+                    {
+                        trait_type: "Issued Date",
+                        value: new Date().toISOString().split("T")[0],
+                    },
+                    ...(distributionMethod === 'direct' ? [] : [
+                        {
+                            trait_type: "Template",
+                            value: "true"
+                        },
+                        {
+                            trait_type: "Max Mints",
+                            value: state.maxMints.toString()
+                        },
+                        ...(state.expiryDate ? [{
+                            trait_type: "Expiry Date",
+                            value: state.expiryDate
+                        }] : [])
+                    ])
+                ],
+                properties: {
+                    signers: state.signers.map(signer => ({
+                        address: signer.address,
+                        role: signer.role,
+                        status: signer.status
+                    })),
+                    network: state.selectedNetwork,
+                    ...(distributionMethod === 'direct' ? {
+                        recipient: state.studentWallet
+                    } : {
+                        requireApproval: state.requireApproval
+                    })
+                }
+            };
+
+            // Upload metadata to IPFS
+            const metadataRequest = await fetch("/api/files", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(metadata),
+            });
+
+            if (!metadataRequest.ok) {
+                const errorResponse = await metadataRequest.json();
+                throw new Error(errorResponse.error || "Failed to create metadata");
+            }
+
+            const ipfsUrl = await metadataRequest.json();
+            const ipfsHash = ipfsUrl.split("/ipfs/")[1];
+            if (!ipfsHash) throw new Error("Invalid IPFS URL format");
+
+            const ipfsFormat = `ipfs://${ipfsHash}`;
+            setState(prev => ({ ...prev, metadataCID: ipfsFormat }));
+            setCreatedMetadata(true);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to create metadata');
+            setCreatedMetadata(false);
+        } finally {
+            setCreatingMetadata(false);
+        }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+
+    const handleAddSigner = () => {
+        if (state.signers.length < 3) {
+            const address = prompt('Enter signer wallet address:');
+            if (address) {
+                const role = prompt('Enter signer role:');
+                if (role) {
+                    setState(prev => ({
+                        ...prev,
+                        signers: [...prev.signers, { address, role, status: 'pending' }]
+                    }));
+                }
+            }
+        }
+    };
+
+    const handleEditSigner = (index: number) => {
+        const newRole = prompt('Enter new role', state.signers[index].role);
+        if (newRole !== null) {
+            const updatedSigners = [...state.signers];
+            updatedSigners[index].role = newRole;
+            setState(prev => ({ ...prev, signers: updatedSigners }));
+        }
+    };
+
+    const handleDeleteSigner = (index: number) => {
+        const updatedSigners = [...state.signers];
+        updatedSigners.splice(index, 1);
+        setState(prev => ({ ...prev, signers: updatedSigners }));
+    };
+
+    const handleToggleSignerStatus = (index: number) => {
+        const updatedSigners = [...state.signers];
+        updatedSigners[index].status = updatedSigners[index].status === 'completed' ? 'pending' : 'completed';
+        setState(prev => ({ ...prev, signers: updatedSigners }));
+    };
+
+    const handleNetworkSelection = (network: 'hedera' | 'edu-chain' | 'ethereum') => {
+        setState(prev => ({ ...prev, selectedNetwork: network }));
+    };
+
+    const handleAddWalletAddress = () => {
+        setState(prev => ({ ...prev, studentWallet: prev.studentWallet.trim() }));
+        const addAddressBtn = document.getElementById('add-address-btn');
+        if (addAddressBtn) {
+            addAddressBtn.innerHTML = '<i className="fas fa-check"></i>';
+            setTimeout(() => {
+                addAddressBtn.innerHTML = 'Add Address';
+            }, 2000);
+        }
+    };
+
+    const generateQRCode = () => {
+        setTimeout(() => {
+            setQrCodeUrl('https://certifi.edu/mint/abcd1234');
+            setQrCodeGenerated(true);
+        }, 1000);
+    };
+
+    const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Handle form submission logic here
-        console.log('Form submitted:', formData);
+        setDeploying(true);
+
+        setTimeout(() => {
+            setDeploying(false);
+            setDeployed(true);
+            setSuccessMessage(true);
+
+            if (distributionMethod === 'qrcode') {
+                generateQRCode();
+            }
+
+            if (successMessageRef.current) {
+                successMessageRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }
+        }, 3000);
     };
 
     return (
-        <div className="mb-8">
-            <div className="p-6 rounded-2xl bg-white dark:bg-dark-card shadow-lg">
-                <div className="flex flex-col md:flex-row items-start justify-between mb-6">
-                    <h3 className="text-xl font-semibold">Create Digital Certificate</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-300 mt-2 md:mt-0">
-                        You will need to store the certificate image and metadata on IPFS for easier retrieval.
-                        <a href="#" className="text-primary hover:underline">What is IPFS?</a>
-                    </p>
-                </div>
-
-                <form onSubmit={handleSubmit}>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Left column: Certificate image and details */}
-                        <div>
-                            <div className="mb-8">
-                                <h4 className="text-lg font-medium uppercase mb-4 tracking-wide">Certificate Image</h4>
-
-                                <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-6 text-center transition-all hover:border-primary dark:hover:border-primary animate-pulse-slow">
-                                    <div id="certificate-preview" className="mb-4 flex items-center justify-center">
-                                        <div className="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center">
-                                            <FaCertificate className="text-primary text-4xl" />
-                                        </div>
-                                    </div>
-
-                                    <p className="text-sm mb-2">b5b12ae1-1101-412e-b171-9bd1aa743416.png</p>
-
-                                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
-                                        <button
-                                            type="button"
-                                            className="w-full sm:w-auto px-6 py-2.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg flex items-center justify-center transition-colors"
-                                        >
-                                            <FaCloudUploadAlt className="mr-2" />
-                                            Upload Image to IPFS
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="w-full sm:w-auto px-6 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-lg flex items-center justify-center transition-colors"
-                                        >
-                                            <FaFileImage className="mr-2" />
-                                            Select Image
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium mb-2">Image CID</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-4 py-2 rounded-lg bg-gray-100 dark:bg-dark-lighter border border-gray-300 dark:border-gray-700 text-base"
-                                    placeholder="ipfs://Qm..."
-                                    value={formData.imageCID}
-                                    onChange={handleInputChange}
-                                    name="imageCID"
-                                    readOnly
-                                />
-                            </div>
-
-                            <div className="space-y-6 mt-8">
-                                <h4 className="text-lg font-medium uppercase mb-4 tracking-wide">Certificate Details</h4>
-
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Student Name</label>
-                                    <input
-                                        type="text"
-                                        className="w-full px-4 py-2 rounded-lg bg-gray-100 dark:bg-dark-lighter border border-gray-300 dark:border-gray-700 text-base focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                                        placeholder="Full name as it will appear on certificate"
-                                        value={formData.studentName}
-                                        onChange={handleInputChange}
-                                        name="studentName"
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Distinction / Achievement</label>
-                                    <input
-                                        type="text"
-                                        className="w-full px-4 py-2 rounded-lg bg-gray-100 dark:bg-dark-lighter border border-gray-300 dark:border-gray-700 text-base focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                                        placeholder="e.g. Bachelor of Computer Science, First Class Honors"
-                                        value={formData.achievement}
-                                        onChange={handleInputChange}
-                                        name="achievement"
-                                        required
-                                    />
-                                </div>
-
-                                <button
-                                    type="button"
-                                    className="w-full py-3 bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors flex items-center justify-center group"
-                                >
-                                    <span className="mr-2">Create & Upload Metadata</span>
-                                    <FaArrowRight className="transition-transform group-hover:translate-x-1" />
-                                </button>
-
-                                <p className="text-xs text-center text-gray-500 dark:text-gray-400">
-                                    Fill in all fields and upload image to IPFS first
-                                </p>
-                            </div>
-
-                            <div className="mt-6">
-                                <label className="block text-sm font-medium mb-2">Metadata CID</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-4 py-2 rounded-lg bg-gray-100 dark:bg-dark-lighter border border-gray-300 dark:border-gray-700 text-base"
-                                    value={formData.metadataCID}
-                                    onChange={handleInputChange}
-                                    name="metadataCID"
-                                    readOnly
-                                />
-                            </div>
-                        </div>
-
-                        {/* Right column: Deploy certificate NFT */}
-                        <div>
-                            <h4 className="text-lg font-medium uppercase mb-4 tracking-wide">Deploy Your Certificate NFT</h4>
-
-                            <div className="grid grid-cols-2 gap-4 mb-6">
-                                <button
-                                    type="button"
-                                    className="w-full py-3 bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors"
-                                >
-                                    Manual Input
-                                </button>
-                                <button
-                                    type="button"
-                                    className="w-full py-3 bg-gray-100 dark:bg-dark-lighter hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                                >
-                                    Upload File
-                                </button>
-                            </div>
-
-                            <div className="mb-8">
-                                <label className="block text-sm font-medium mb-2">Add Student Wallet Address</label>
-                                <div className="flex items-center">
-                                    <input
-                                        type="text"
-                                        className="flex-1 px-4 py-2 rounded-l-lg bg-gray-100 dark:bg-dark-lighter border border-gray-300 dark:border-gray-700 text-base"
-                                        placeholder="0x..."
-                                        value={formData.studentWallet}
-                                        onChange={handleInputChange}
-                                        name="studentWallet"
-                                    />
-                                    <button
-                                        type="button"
-                                        className="px-4 py-2 bg-primary text-white rounded-r-lg hover:bg-primary-dark transition-colors"
-                                    >
-                                        Add Address
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="mb-8">
-                                <div className="flex items-center justify-between mb-3">
-                                    <h5 className="text-lg font-medium uppercase tracking-wide">Certificate Signers</h5>
-                                    <span className="text-sm text-gray-500 dark:text-gray-400">(3 max)</span>
-                                </div>
-
-                                <div className="mb-4">
-                                    <div className="flex items-center justify-between">
-                                        <div className="text-sm text-gray-500 dark:text-gray-400">Signers ({formData.signers.length}/3)</div>
-                                        <button
-                                            type="button"
-                                            onClick={handleAddSigner}
-                                            disabled={formData.signers.length >= 3}
-                                            className="px-3 py-1 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center justify-center disabled:opacity-50"
-                                        >
-                                            <FaPlus className="mr-1" />
-                                            Add Signer
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3">
-                                    {formData.signers.map((signer, index) => (
-                                        <div key={index} className="p-3 rounded-lg bg-gray-100 dark:bg-dark-lighter flex items-center justify-between group hover:bg-primary/5 transition-colors">
-                                            <div className="flex items-center">
-                                                <div className={`w-2 h-2 rounded-full ${signer.status === 'completed' ? 'bg-green-500' :
-                                                    signer.status === 'pending' ? 'bg-yellow-500' : 'bg-gray-500'
-                                                    } mr-3`}></div>
-                                                <div>
-                                                    <p className="font-medium">{signer.address}</p>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400">{signer.role}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                {signer.status === 'completed' && (
-                                                    <button type="button" className="text-green-500">
-                                                        <FaCheckCircle />
-                                                    </button>
-                                                )}
-                                                {signer.status === 'pending' && (
-                                                    <button type="button" className="text-yellow-500">
-                                                        <FaClock />
-                                                    </button>
-                                                )}
-                                                <button
-                                                    type="button"
-                                                    className="text-primary"
-                                                    onClick={() => handleSignerChange(index, 'role', prompt('Enter new role', signer.role) || signer.role)}
-                                                >
-                                                    <FaEdit />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="text-red-500"
-                                                    onClick={() => handleRemoveSigner(index)}
-                                                >
-                                                    <FaTrash />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {formData.signers.some(s => s.status === 'pending') && (
-                                    <div className="mt-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 flex items-center text-yellow-600">
-                                        <FaClock className="mr-2" />
-                                        <span className="text-sm">Waiting for {formData.signers.filter(s => s.status === 'pending').length} of {formData.signers.length} signers to complete</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="mb-6">
-                                <h5 className="text-sm font-medium mb-3">Select network to deploy your Certificate NFT</h5>
-                                <div className="grid grid-cols-3 gap-3">
-                                    {['hedera', 'edu-chain', 'ethereum'].map(network => (
-                                        <button
-                                            key={network}
-                                            type="button"
-                                            className={`py-3 px-2 bg-gray-100 dark:bg-dark-lighter rounded-lg transition-colors flex items-center justify-center ${formData.selectedNetwork === network
-                                                ? 'bg-primary text-white'
-                                                : 'hover:bg-primary hover:text-white'
-                                                }`}
-                                            onClick={() => setFormData(prev => ({ ...prev, selectedNetwork: network }))}
-                                        >
-                                            {network.charAt(0).toUpperCase() + network.slice(1)}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <button
-                                type="submit"
-                                className="w-full py-3 bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors flex items-center justify-center group mt-6"
-                            >
-                                <FaCertificate className="mr-2" />
-                                <span>Deploy Certificate NFT</span>
-                            </button>
-                        </div>
+        <div className="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen rounded-xl">
+            <div className="container mx-auto px-1 py-4 max-w-6xl">
+                <div className="p-6 rounded-2xl bg-white dark:bg-dark-card shadow-lg mb-8">
+                    <div className="flex flex-col md:flex-row items-start justify-between mb-6">
+                        <h3 className="text-xl font-semibold">Create Digital Certificate</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-300 mt-2 md:mt-0">
+                            You will need to store the certificate image and metadata on IPFS for easier retrieval.
+                            <a href="#" className="text- hover:underline">What is IPFS?</a>
+                        </p>
                     </div>
-                </form>
+
+                    <DistributionMethodSelector
+                        distributionMethod={distributionMethod}
+                        setDistributionMethod={setDistributionMethod}
+                    />
+
+                    <form onSubmit={handleFormSubmit}>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* Left column: Certificate image and details */}
+                            <div>
+                                <CertificateImageUpload
+                                    imageInputRef={imageInputRef}
+                                    selectedImage={state.selectedImage}
+                                    imagePreview={imagePreview}
+                                    uploadingImage={uploadingImage}
+                                    uploadedImage={uploadedImage}
+                                    imageCID={state.imageCID}
+                                    error={error}
+                                    handleSelectImage={handleSelectImage}
+                                    handleImageChange={handleImageChange}
+                                    handleUploadToIPFS={handleUploadToIPFS}
+                                />
+
+                                <CertificateDetails
+                                    distributionMethod={distributionMethod}
+                                    state={state}
+                                    setState={setState}
+                                    isMetadataEligible={isMetadataEligible as any}
+                                    creatingMetadata={creatingMetadata}
+                                    createdMetadata={createdMetadata}
+                                    metadataCID={state.metadataCID}
+                                    handleCreateMetadata={handleCreateMetadata}
+                                    error={error}
+                                    setError={setError}
+                                />
+                            </div>
+
+                            {/* Right column: Deploy certificate NFT */}
+                            <CertificateDeployment
+                                distributionMethod={distributionMethod}
+                                inputMethod={inputMethod}
+                                setInputMethod={setInputMethod}
+                                state={state}
+                                setState={setState}
+                                signers={state.signers}
+                                pendingSigners={pendingSigners}
+                                deploying={deploying}
+                                deployed={deployed}
+                                successMessage={successMessage}
+                                successMessageRef={successMessageRef}
+                                qrCodeUrl={qrCodeUrl}
+                                qrCodeGenerated={qrCodeGenerated}
+                                handleAddSigner={handleAddSigner}
+                                handleEditSigner={handleEditSigner}
+                                handleDeleteSigner={handleDeleteSigner}
+                                handleToggleSignerStatus={handleToggleSignerStatus}
+                                handleAddWalletAddress={handleAddWalletAddress}
+                                metadataCID={state.metadataCID}
+                            />
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     );
