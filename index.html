@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YieldGuru | Bringing Public Transport Assets On-Chain</title>
+    <meta name="description"
+        content="YieldGuru - Blockchain infrastructure for public transport asset investment. A platform for investors, operators, and users.">
+    <meta name="keywords" content="web3 transport, blockchain investment, transport NFTs, public transport assets">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5056E5',
+                        secondary: '#8C52FF',
+                        accent: '#C4D7FF',
+                        light: '#F5F7FF',
+                        dark: '#1A1A2E',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <style>
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .gradient-bg {
+            background: linear-gradient(-45deg, #5056E5, #8C52FF, #9E77ED, #7192FF);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+
+        .dark .gradient-bg {
+            background: linear-gradient(-45deg, #3A3D99, #6E41C4, #7D5FC0, #5778CC);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+
+        .bus-animate {
+            animation: drive 30s linear infinite;
+        }
+
+        @keyframes drive {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100vw);
+            }
+        }
+
+        .hex-pattern {
+            background-color: #f8fafc;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z' fill='%235056e5' fill-opacity='0.05'/%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .dark .hex-pattern {
+            background-color: #1a1a2e;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z' fill='%238C52FF' fill-opacity='0.1'/%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        body {
+            @apply bg-light text-gray-800;
+        }
+
+        .dark body {
+            @apply bg-dark text-white;
+        }
+    </style>
+</head>
+
+<body class="hex-pattern min-h-screen font-sans">
+    <!-- Dark Mode Support -->
+    <script>
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+    </script>
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 bg-white bg-opacity-90 dark:bg-dark dark:bg-opacity-90 backdrop-blur-sm shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex-shrink-0 flex items-center">
+                    <div class="flex items-center">
+                        <div class="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-xl">YG</span>
+                        </div>
+                        <span class="ml-2 text-xl font-bold text-gray-800 dark:text-white">YieldGuru</span>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="#about"
+                        class="text-gray-600 hover:text-primary dark:text-gray-300 dark:hover:text-white transition">About</a>
+                    <a href="#how-it-works"
+                        class="text-gray-600 hover:text-primary dark:text-gray-300 dark:hover:text-white transition">How
+                        it Works</a>
+                    <a href="#for-users"
+                        class="text-gray-600 hover:text-primary dark:text-gray-300 dark:hover:text-white transition">For
+                        Users</a>
+                    <a href="#partners"
+                        class="text-gray-600 hover:text-primary dark:text-gray-300 dark:hover:text-white transition">Partners</a>
+                    <a href="#blog"
+                        class="text-gray-600 hover:text-primary dark:text-gray-300 dark:hover:text-white transition">Blog</a>
+                    <a href="#docs"
+                        class="text-gray-600 hover:text-primary dark:text-gray-300 dark:hover:text-white transition">Docs</a>
+                    <button id="connectWalletBtn"
+                        class="bg-primary hover:bg-primary/90 text-white py-2 px-5 rounded-lg font-medium transition">Connect
+                        Wallet</button>
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="mobileMenuBtn" class="text-gray-600 dark:text-gray-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile menu -->
+        <div id="mobileMenu" class="hidden md:hidden bg-white dark:bg-dark">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#about"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary dark:text-gray-300 dark:hover:text-white">About</a>
+                <a href="#how-it-works"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary dark:text-gray-300 dark:hover:text-white">How
+                    it Works</a>
+                <a href="#for-users"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary dark:text-gray-300 dark:hover:text-white">For
+                    Users</a>
+                <a href="#partners"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary dark:text-gray-300 dark:hover:text-white">Partners</a>
+                <a href="#blog"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary dark:text-gray-300 dark:hover:text-white">Blog</a>
+                <a href="#docs"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary dark:text-gray-300 dark:hover:text-white">Docs</a>
+                <button id="mobileConnectWalletBtn"
+                    class="w-full mt-2 bg-primary hover:bg-primary/90 text-white py-2 px-5 rounded-lg font-medium transition">Connect
+                    Wallet</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-24 md:pt-24 md:pb-32">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div class="order-2 md:order-1">
+                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white leading-tight">
+                        Bringing <span class="text-primary">Public Transport</span> <br>Assets On-Chain
+                    </h1>
+                    <p class="mt-4 text-lg md:text-xl text-gray-600 dark:text-gray-300">
+                        A blockchain infrastructure platform connecting investors, operators, and users for sustainable
+                        public transportation.
+                    </p>
+                    <div class="mt-8 flex flex-col sm:flex-row gap-4">
+                        <button id="heroConnectWalletBtn"
+                            class="bg-primary hover:bg-primary/90 text-white py-3 px-8 rounded-lg font-medium text-base transition flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v2" />
+                            </svg>
+                            Connect Wallet
+                        </button>
+                        <button id="waitlistBtn"
+                            class="border-2 border-primary hover:bg-primary/10 text-primary py-3 px-8 rounded-lg font-medium text-base transition flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Join Waitlist
+                        </button>
+                    </div>
+                    <div class="mt-8 flex items-center space-x-4">
+                        <span class="text-sm text-gray-500 dark:text-gray-400">Supporting:</span>
+                        <span
+                            class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-xs font-medium text-gray-800 dark:text-gray-200">
+                            .onchain
+                        </span>
+                        <span
+                            class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-xs font-medium text-gray-800 dark:text-gray-200">
+                            ENS
+                        </span>
+                    </div>
+                </div>
+                <div class="order-1 md:order-2 relative">
+                    <div class="h-64 md:h-96 relative">
+                        <!-- Animated bus & blockchain visual -->
+                        <div class="absolute inset-0">
+                            <svg viewBox="0 0 400 300" class="w-full h-full">
+                                <!-- City skyline -->
+                                <rect x="0" y="220" width="400" height="80" fill="#E2E8F0" class="dark:fill-gray-800" />
+                                <rect x="20" y="180" width="40" height="40" fill="#CBD5E1" class="dark:fill-gray-700" />
+                                <rect x="70" y="150" width="30" height="70" fill="#CBD5E1" class="dark:fill-gray-700" />
+                                <rect x="110" y="170" width="50" height="50" fill="#CBD5E1"
+                                    class="dark:fill-gray-700" />
+                                <rect x="170" y="140" width="35" height="80" fill="#CBD5E1"
+                                    class="dark:fill-gray-700" />
+                                <rect x="215" y="190" width="45" height="30" fill="#CBD5E1"
+                                    class="dark:fill-gray-700" />
+                                <rect x="270" y="160" width="40" height="60" fill="#CBD5E1"
+                                    class="dark:fill-gray-700" />
+                                <rect x="320" y="180" width="60" height="40" fill="#CBD5E1"
+                                    class="dark:fill-gray-700" />
+
+                                <!-- Road -->
+                                <rect x="0" y="220" width="400" height="20" fill="#94A3B8" class="dark:fill-gray-600" />
+                                <line x1="20" y1="230" x2="50" y2="230" stroke="white" stroke-width="2"
+                                    stroke-dasharray="5,5" class="dark:stroke-gray-400" />
+                                <line x1="70" y1="230" x2="100" y2="230" stroke="white" stroke-width="2"
+                                    stroke-dasharray="5,5" class="dark:stroke-gray-400" />
+                                <line x1="120" y1="230" x2="150" y2="230" stroke="white" stroke-width="2"
+                                    stroke-dasharray="5,5" class="dark:stroke-gray-400" />
+                                <line x1="170" y1="230" x2="200" y2="230" stroke="white" stroke-width="2"
+                                    stroke-dasharray="5,5" class="dark:stroke-gray-400" />
+                                <line x1="220" y1="230" x2="250" y2="230" stroke="white" stroke-width="2"
+                                    stroke-dasharray="5,5" class="dark:stroke-gray-400" />
+                                <line x1="270" y1="230" x2="300" y2="230" stroke="white" stroke-width="2"
+                                    stroke-dasharray="5,5" class="dark:stroke-gray-400" />
+                                <line x1="320" y1="230" x2="350" y2="230" stroke="white" stroke-width="2"
+                                    stroke-dasharray="5,5" class="dark:stroke-gray-400" />
+                                <line x1="370" y1="230" x2="400" y2="230" stroke="white" stroke-width="2"
+                                    stroke-dasharray="5,5" class="dark:stroke-gray-400" />
+
+                                <!-- Bus (will be animated via JS) -->
+                                <g id="bus" transform="translate(-100, 0)">
+                                    <rect x="10" y="200" width="80" height="25" rx="5" fill="#5056E5" />
+                                    <rect x="15" y="190" width="70" height="10" rx="2" fill="#8C52FF" />
+                                    <rect x="20" y="205" width="15" height="8" fill="#C4D7FF" />
+                                    <rect x="40" y="205" width="15" height="8" fill="#C4D7FF" />
+                                    <rect x="60" y="205" width="15" height="8" fill="#C4D7FF" />
+                                    <circle cx="25" cy="225" r="6" fill="#1A1A2E" />
+                                    <circle cx="75" cy="225" r="6" fill="#1A1A2E" />
+                                </g>
+
+                                <!-- Blockchain elements -->
+                                <g class="animate-float">
+                                    <circle cx="200" cy="120" r="35" fill="#8C52FF" fill-opacity="0.2" />
+                                    <path d="M200,90 L225,107.5 L225,142.5 L200,160 L175,142.5 L175,107.5 Z"
+                                        stroke="#5056E5" stroke-width="2" fill="none" />
+                                    <text x="190" y="125" fill="#5056E5" font-size="12" font-weight="bold">YG</text>
+                                </g>
+                                <g class="animate-float" style="animation-delay: 1s">
+                                    <circle cx="150" cy="80" r="25" fill="#5056E5" fill-opacity="0.2" />
+                                    <path d="M150,60 L167.5,72.5 L167.5,97.5 L150,110 L132.5,97.5 L132.5,72.5 Z"
+                                        stroke="#8C52FF" stroke-width="2" fill="none" />
+                                    <text x="143" y="85" fill="#8C52FF" font-size="10" font-weight="bold">$</text>
+                                </g>
+                                <g class="animate-float" style="animation-delay: 2s">
+                                    <circle cx="250" cy="80" r="25" fill="#C4D7FF" fill-opacity="0.4" />
+                                    <path d="M250,60 L267.5,72.5 L267.5,97.5 L250,110 L232.5,97.5 L232.5,72.5 Z"
+                                        stroke="#C4D7FF" stroke-width="2" fill="none" />
+                                    <text x="243" y="85" fill="#5056E5" font-size="10" font-weight="bold">₿</text>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- What is YieldGuru Section -->
+    <section id="about" class="bg-white dark:bg-gray-900 py-16 md:py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">What is YieldGuru?</h2>
+                <div class="w-20 h-1 bg-primary mx-auto mt-4 mb-8 rounded-full"></div>
+                <p class="max-w-3xl mx-auto text-lg text-gray-600 dark:text-gray-300">
+                    YieldGuru is a revolutionary platform connecting blockchain technology with public transportation
+                    infrastructure.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-light dark:bg-dark rounded-xl p-8 shadow-sm hover:shadow-md transition">
+                    <div class="w-14 h-14 bg-primary bg-opacity-10 rounded-lg flex items-center justify-center mb-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Yield-Bearing Assets</h3>
+                    <p class="text-gray-600 dark:text-gray-300">
+                        Transform public transport vehicles into tokenized yield-generating assets on the blockchain.
+                    </p>
+                </div>
+
+                <div class="bg-light dark:bg-dark rounded-xl p-8 shadow-sm hover:shadow-md transition">
+                    <div class="w-14 h-14 bg-primary bg-opacity-10 rounded-lg flex items-center justify-center mb-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Secure Investment</h3>
+                    <p class="text-gray-600 dark:text-gray-300">
+                        Invest in real-world assets with the security and transparency of blockchain technology.
+                    </p>
+                </div>
+
+                <div class="bg-light dark:bg-dark rounded-xl p-8 shadow-sm hover:shadow-md transition">
+                    <div class="w-14 h-14 bg-primary bg-opacity-10 rounded-lg flex items-center justify-center mb-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Global Access</h3>
+                    <p class="text-gray-600 dark:text-gray-300">
+                        Connect operators, investors, and users globally through our decentralized platform.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works Section -->
+    <section id="how-it-works" class="py-16 md:py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">How it Works</h2>
+                <div class="w-20 h-1 bg-primary mx-auto mt-4 mb-8 rounded-full"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-4">
+                <div class="relative">
+                    <div class="flex items-center justify-center mb-6">
+                        <div
+                            class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                            1</div>
+                    </div>
+                    <div class="text-center mb-8">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Connect Wallet</h3>
+                        <p class="text-gray-600 dark:text-gray-300">
+                            Connect your Web3 wallet or create a new smart wallet instantly.
+                        </p>
+                    </div>
+                    <div class="hidden md:block absolute top-10 left-full w-16 h-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 64 16">
+                            <path d="M0 8H60L52 1M60 8L52 15" stroke="#5056E5" stroke-width="2" fill="none" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="relative">
+                    <div class="flex items-center justify-center mb-6">
+                        <div
+                            class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                            2</div>
+                    </div>
+                    <div class="text-center mb-8">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Invest</h3>
+                        <p class="text-gray-600 dark:text-gray-300">
+                            Purchase NFTs representing shares in public transport assets.
+                        </p>
+                    </div>
+                    <div class="hidden md:block absolute top-10 left-full w-16 h-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 64 16">
+                            <path d="M0 8H60L52 1M60 8L52 15" stroke="#5056E5" stroke-width="2" fill="none" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-center mb-6">
+                        <div
+                            class="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                            3</div>
+                    </div>
+                    <div class="text-center mb-8">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Earn Yield</h3>
+                        <p class="text-gray-600 dark:text-gray-300">
+                            Receive returns based on asset performance and usage.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-12 flex justify-center">
+                <button id="learnMoreBtn"
+                    class="bg-white dark:bg-dark border-2 border-primary text-primary py-3 px-8 rounded-lg font-medium text-base transition hover:bg-primary/10 flex items-center">
+                    Learn More
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- For Users Section -->
+    <section id="for-users" class="bg-white dark:bg-gray-900 py-16 md:py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">For Everyone</h2>
+                <div class="w-20 h-1 bg-primary mx-auto mt-4 mb-8 rounded-full"></div>
+                <p class="max-w-3xl mx-auto text-lg text-gray-600 dark:text-gray-300">
+                    YieldGuru creates a seamless ecosystem for all stakeholders in public transportation.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+                <div class="bg-light dark:bg-dark rounded-xl p-8 relative">
+                    <div class="absolute -top-8 left-1/2 transform -translate-x-1/2">
+                        <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white text-center mt-4 mb-6">For Investors
+                    </h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mt-1 mr-2 flex-shrink-0"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span class="text-gray-600 dark:text-gray-300">Fractional ownership of transport
+                                assets</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mt-1 mr-2 flex-shrink-0"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span class="text-gray-600 dark:text-gray-300">Regular yield from operational revenue</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mt-1 mr-2 flex-shrink-0"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span class="text-gray-600 dark:text-gray-300">Transparent performance tracking</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mt-1 mr-2 flex-shrink-0"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span class="text-gray-600 dark:text-gray-300">Liquidity through NFT trading</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="bg-light dark:bg-dark rounded-xl p-8 relative">
+                    <div class="absolute -top-8 left-1/2 transform -translate-x-1/2">
+                        <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white text-center mt-4 mb-6">For Operators
+                    </h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mt-1 mr-2 flex-shrink-0"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span class="text-gray-600 dark:text-gray-300">Access to decentralized funding</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mt-1 mr-2 flex-shrink-0"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span class="text-gray-600 dark:text-gray-300">Tokenize fleet assets as NFTs</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mt-1 mr-2 flex-shrink-0"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span class="text-gray-600 dark:text-gray-300">Automated revenue distribution</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mt-1 mr-2 flex-shrink-0"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span class="text-gray-600 dark:text-gray-300">Blockchain-verified maintenance
+                                records</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="bg-light dark:bg-dark rounded-xl p-8 relative">
+                    <div class="absolute -top-8 left-1/2 transform -translate-x-1/2">
+                        <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white text-center mt-4 mb-6">For Daily
+                        Riders</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mt-1 mr-2 flex-shrink-0"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span class="text-gray-600 dark:text-gray-300">Lower fares through tokenized
+                                subsidies</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mt-1 mr-2 flex-shrink-0"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span class="text-gray-600 dark:text-gray-300">Improved service quality and
+                                accessibility</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mt-1 mr-2 flex-shrink-0"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span class="text-gray-600 dark:text-gray-300">Participate in governance decisions</span>
+                        </li>
+                        <li class="flex items-start">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary mt-1 mr-2 flex-shrink-0"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span class="text-gray-600 dark:text-gray-300">Earn rewards for consistent usage</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Partners Section -->
+    <section id="partners" class="py-16 md:py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">Partners & Integrations</h2>
+                <div class="w-20 h-1 bg-primary mx-auto mt-4 mb-8 rounded-full"></div>
+                <p class="max-w-3xl mx-auto text-lg text-gray-600 dark:text-gray-300">
+                    Working with leading blockchain networks and technologies to build the future of transport.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="flex flex-col items-center p-8 bg-light dark:bg-dark rounded-xl">
+                    <div class="w-20 h-20 mb-6 flex items-center justify-center">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+                            <rect width="80" height="80" x="10" y="10" rx="10" fill="#0052FF" />
+                            <text x="50" y="65" font-size="40" font-weight="bold" fill="white"
+                                text-anchor="middle">B</text>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Base</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-center">
+                        Built on Base for scalable and secure transportation asset tokenization.
+                    </p>
+                </div>
+
+                <div class="flex flex-col items-center p-8 bg-light dark:bg-dark rounded-xl">
+                    <div class="w-20 h-20 mb-6 flex items-center justify-center">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+                            <circle cx="50" cy="50" r="40" fill="#35D07F" />
+                            <text x="50" y="65" font-size="40" font-weight="bold" fill="white"
+                                text-anchor="middle">C</text>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Celo</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-center">
+                        Leveraging Celo for mobile-first, carbon-negative blockchain solutions.
+                    </p>
+                </div>
+
+                <div class="flex flex-col items-center p-8 bg-light dark:bg-dark rounded-xl">
+                    <div class="w-20 h-20 mb-6 flex items-center justify-center">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+                            <circle cx="50" cy="50" r="40" fill="#4940E0" />
+                            <text x="50" y="65" font-size="25" font-weight="bold" fill="white"
+                                text-anchor="middle">World</text>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Worldcoin</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-center">
+                        Identity verification for secure and accessible platform access.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Email Capture / Waitlist -->
+    <section id="waitlist" class="bg-white dark:bg-gray-900 py-16 md:py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+            <div class="gradient-bg absolute -inset-4 blur-3xl opacity-20 rounded-3xl"></div>
+            <div class="relative bg-white dark:bg-dark rounded-2xl shadow-xl overflow-hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2">
+                    <div class="p-8 md:p-12">
+                        <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">Join the YieldGuru Waitlist
+                        </h2>
+                        <p class="text-gray-600 dark:text-gray-300 mb-8">
+                            Be the first to access our platform when we launch. Enter your email to join our waitlist.
+                        </p>
+                        <form id="waitlistForm" class="space-y-4">
+                            <div>
+                                <label for="email"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email
+                                    Address</label>
+                                <input type="email" id="email" name="email" placeholder="you@example.com" required
+                                    class="w-full px-4 py-3 rounded-lg bg-light dark:bg-gray-800 border border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-base">
+                            </div>
+                            <div>
+                                <label for="interest"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">I'm
+                                    interested as a...</label>
+                                <select id="interest" name="interest"
+                                    class="w-full px-4 py-3 rounded-lg bg-light dark:bg-gray-800 border border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-primary focus:border-primary text-base">
+                                    <option value="investor">Investor</option>
+                                    <option value="operator">Transport Operator</option>
+                                    <option value="rider">Daily Rider</option>
+                                    <option value="developer">Developer</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <button type="submit"
+                                class="w-full bg-primary hover:bg-primary/90 text-white py-3 px-6 rounded-lg font-medium text-base transition flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                Join Waitlist
+                            </button>
+                        </form>
+                    </div>
+                    <div class="p-8 md:p-12 bg-primary/10 dark:bg-primary/5 flex flex-col justify-center">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Why Join Our Waitlist?</h3>
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    class="h-6 w-6 text-primary mt-0.5 mr-3 flex-shrink-0" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span class="text-gray-600 dark:text-gray-300">Early access to investment
+                                    opportunities</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    class="h-6 w-6 text-primary mt-0.5 mr-3 flex-shrink-0" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span class="text-gray-600 dark:text-gray-300">VIP status for platform features</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    class="h-6 w-6 text-primary mt-0.5 mr-3 flex-shrink-0" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span class="text-gray-600 dark:text-gray-300">Participate in our governance token
+                                    distribution</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    class="h-6 w-6 text-primary mt-0.5 mr-3 flex-shrink-0" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span class="text-gray-600 dark:text-gray-300">Free domain name (.onchain or .eth) for
+                                    early members</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center mb-6">
+                        <div class="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-xl">YG</span>
+                        </div>
+                        <span class="ml-2 text-xl font-bold">YieldGuru</span>
+                    </div>
+                    <p class="text-gray-400 mb-6">
+                        Bringing Public Transport Assets On-Chain
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor"
+                                viewBox="0 0 24 24">
+                                <path
+                                    d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+                            </svg>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor"
+                                viewBox="0 0 24 24">
+                                <path
+                                    d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                            </svg>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor"
+                                viewBox="0 0 24 24">
+                                <path
+                                    d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                            </svg>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor"
+                                viewBox="0 0 24 24">
+                                <path
+                                    d="M12 12.713l-11.985-9.713h23.97l-11.985 9.713zm0 2.574l-12-9.725v15.438h24v-15.438l-12 9.725z" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Product</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#about" class="text-gray-400 hover:text-white transition">About</a></li>
+                        <li><a href="#how-it-works" class="text-gray-400 hover:text-white transition">How it Works</a>
+                        </li>
+                        <li><a href="#for-users" class="text-gray-400 hover:text-white transition">For Users</a></li>
+                        <li><a href="#partners" class="text-gray-400 hover:text-white transition">Partners</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Resources</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Documentation</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Blog</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Press Kit</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">FAQ</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Legal</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Terms of Service</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-gray-400 text-sm">
+                    &copy; 2023 YieldGuru. All rights reserved.
+                </p>
+                <div class="mt-4 md:mt-0">
+                    <span class="text-gray-400 text-sm">Built on</span>
+                    <span class="ml-2 px-3 py-1 bg-gray-800 rounded-full text-xs font-medium text-white">Base</span>
+                    <span class="ml-2 px-3 py-1 bg-gray-800 rounded-full text-xs font-medium text-white">Celo</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal for Wallet Connection -->
+    <div id="walletModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
+            <div class="bg-white dark:bg-dark rounded-xl shadow-2xl p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">Connect Wallet</h3>
+                    <button id="closeWalletModal"
+                        class="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <button
+                        class="w-full flex items-center justify-between p-4 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                        <div class="flex items-center">
+                            <div
+                                class="h-10 w-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                                M</div>
+                            <span class="ml-3 font-medium text-gray-900 dark:text-white">MetaMask</span>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <button
+                        class="w-full flex items-center justify-between p-4 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                        <div class="flex items-center">
+                            <div
+                                class="h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                                W</div>
+                            <span class="ml-3 font-medium text-gray-900 dark:text-white">WalletConnect</span>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <button
+                        class="w-full flex items-center justify-between p-4 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                        <div class="flex items-center">
+                            <div
+                                class="h-10 w-10 bg-blue-700 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                                C</div>
+                            <span class="ml-3 font-medium text-gray-900 dark:text-white">Coinbase Wallet</span>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <div class="relative flex items-center py-3">
+                        <div class="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
+                        <span class="flex-shrink mx-4 text-gray-500 dark:text-gray-400 text-sm">Or continue with</span>
+                        <div class="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
+                    </div>
+
+                    <button
+                        class="w-full flex items-center justify-center gap-3 p-4 bg-primary rounded-lg text-white hover:bg-primary/90 transition">
+                        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6">
+                            <circle cx="16" cy="16" r="14" fill="white" />
+                            <path
+                                d="M16 6C10.5 6 6 10.5 6 16s4.5 10 10 10 10-4.5 10-10-4.5-10-10-10zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"
+                                fill="#4940E0" />
+                            <circle cx="16" cy="16" r="6" fill="#4940E0" />
+                        </svg>
+                        <span class="font-medium">World ID</span>
+                    </button>
+
+                    <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
+                        Don't have a wallet? We'll create a smart wallet for you.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Waitlist Confirmation Modal -->
+    <div id="waitlistConfirmationModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
+            <div class="bg-white dark:bg-dark rounded-xl shadow-2xl p-8 text-center">
+                <div
+                    class="w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full mx-auto flex items-center justify-center mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-green-500" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+
+                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">You're on the list!</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-8">
+                    Thanks for joining the YieldGuru waitlist. We'll notify you when we launch.
+                </p>
+
+                <button id="closeWaitlistConfirmationModal"
+                    class="w-full py-3 bg-primary rounded-lg text-white hover:bg-primary/90 transition font-medium">
+                    Got it
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', function () {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // All wallet connection buttons
+        const walletBtns = [
+            document.getElementById('connectWalletBtn'),
+            document.getElementById('mobileConnectWalletBtn'),
+            document.getElementById('heroConnectWalletBtn')
+        ];
+
+        walletBtns.forEach(btn => {
+            if (btn) {
+                btn.addEventListener('click', function () {
+                    document.getElementById('walletModal').classList.remove('hidden');
+                });
+            }
+        });
+
+        // Close wallet modal
+        document.getElementById('closeWalletModal').addEventListener('click', function () {
+            document.getElementById('walletModal').classList.add('hidden');
+        });
+
+        // Waitlist form submission
+        const waitlistTriggers = [
+            document.getElementById('waitlistBtn'),
+            document.getElementById('waitlistForm')
+        ];
+
+        waitlistTriggers.forEach(trigger => {
+            if (trigger) {
+                if (trigger.tagName === 'FORM') {
+                    trigger.addEventListener('submit', function (e) {
+                        e.preventDefault();
+                        document.getElementById('waitlistConfirmationModal').classList.remove('hidden');
+                    });
+                } else {
+                    trigger.addEventListener('click', function () {
+                        document.querySelector('#waitlist').scrollIntoView({ behavior: 'smooth' });
+                    });
+                }
+            }
+        });
+
+        // Close waitlist confirmation modal
+        document.getElementById('closeWaitlistConfirmationModal').addEventListener('click', function () {
+            document.getElementById('waitlistConfirmationModal').classList.add('hidden');
+        });
+
+        // Animate bus moving across the screen
+        const bus = document.getElementById('bus');
+        if (bus) {
+            bus.classList.add('bus-animate');
+        }
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+
+                    // Close mobile menu if open
+                    const mobileMenu = document.getElementById('mobileMenu');
+                    if (!mobileMenu.classList.contains('hidden')) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

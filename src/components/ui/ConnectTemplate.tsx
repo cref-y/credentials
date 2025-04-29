@@ -25,7 +25,6 @@ export default function ConnectTemplate() {
         <div className="flex flex-col items-center justify-center min-h-[80vh] p-4">
             <div className="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
                 <div className="text-center p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Welcome to Student Dashboard</h1>
                     <p className="text-base sm:text-lg mt-2 text-gray-600 dark:text-gray-300">
                         Connect your account to access all features
                     </p>
@@ -38,8 +37,8 @@ export default function ConnectTemplate() {
                             <button
                                 onClick={() => setActiveTab("features")}
                                 className={`flex-1 py-2 px-4 text-center font-medium ${activeTab === "features"
-                                        ? "border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
-                                        : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                                    ? "border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
+                                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                                     }`}
                             >
                                 Features
@@ -47,8 +46,8 @@ export default function ConnectTemplate() {
                             <button
                                 onClick={() => setActiveTab("benefits")}
                                 className={`flex-1 py-2 px-4 text-center font-medium ${activeTab === "benefits"
-                                        ? "border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
-                                        : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                                    ? "border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
+                                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                                     }`}
                             >
                                 Benefits
@@ -126,8 +125,8 @@ export default function ConnectTemplate() {
                         onClick={handleConnect}
                         disabled={connecting}
                         className={`w-full sm:w-auto px-8 py-3 rounded-md font-medium text-white ${connecting
-                                ? "bg-blue-400 cursor-not-allowed"
-                                : "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                            ? "bg-blue-400 cursor-not-allowed"
+                            : "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
                             } transition-colors`}
                     >
                         {connecting ? "Connecting..." : "Connect Account"}

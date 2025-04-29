@@ -147,7 +147,7 @@ export default function DcnNavBar() {
                         >
                             <ul className="py-1 px-3 text-white">
                                 <DropdownItem onClick={() => handleDashboardClick('student')}>
-                                    Student Dashboard
+                                    User Dashboard
                                 </DropdownItem>
                                 <DropdownItem onClick={() => handleDashboardClick('institution')}>
                                     Institution Dashboard
